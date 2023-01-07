@@ -24,7 +24,7 @@ export default function register(Component, tagName, propNames, options) {
 	propNames.forEach((name) => {
 		Object.defineProperty(PreactElement.prototype, name, {
 			get() {
-				return this._vdom.props[name];
+				return this._vdom?.props?.[name] ?? this._props?.[name];
 			},
 			set(v) {
 				if (this._vdom) {
@@ -94,10 +94,16 @@ function attributeChangedCallback(name, oldValue, newValue) {
 	// common in pure JS components, especially with default parameters.
 	// When calling `node.removeAttribute()` we'll receive `null` as the new
 	// value. See issue #50.
-	newValue = newValue == null ? undefined : newValue;
-	const props = {};
-	props[name] = newValue;
-	props[toCamelCase(name)] = newValue;
+	const _newValue = fromString(newValue);
+	const props = this._props || {};
+
+	if (props[name] === _newValue) {
+		// no rerender if values are same
+		return;
+	}
+	props[name] = _newValue;
+	props[toCamelCase(name)] = _newValue;
+
 	this._vdom = cloneElement(this._vdom, props);
 	render(this._vdom, this._root);
 }
@@ -160,4 +166,23 @@ function toVdom(element, nodeName) {
 	// Only wrap the topmost node with a slot
 	const wrappedChildren = nodeName ? h(Slot, null, children) : children;
 	return h(nodeName || element.nodeName.toLowerCase(), props, wrappedChildren);
+}
+
+// fix "stringified" values from setAttribute call
+const RE = /^(\s*|[+-]?0\d.*)$/;
+function fromString(value) {
+	if (value === null) {
+		return;
+	}
+	if (typeof value === 'boolean') {
+		return value;
+	}
+	if (value === 'true') {
+		return true;
+	}
+	if (value === 'false') {
+		return false;
+	}
+	const num = Number(value);
+	return isNaN(num) || RE.test(value) ? value : num;
 }

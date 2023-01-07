@@ -1,6 +1,6 @@
 {
 	"name": "preact-custom-element",
-	"version": "4.2.1",
+	"version": "4.2.2",
 	"description": "Wrap your component up as a custom element",
 	"main": "dist/preact-custom-element.js",
 	"module": "dist/preact-custom-element.esm.js",
@@ -9,16 +9,17 @@
 	"scripts": {
 		"prepare": "microbundle",
 		"lint": "eslint src/*.{js,jsx}",
-		"test": "wtr src/*.test.{js,jsx}",
+		"test": "wtr src/*.test.{js,jsx} --puppeteer",
 		"test:browsers": "wtr src/*.test.{js,jsx} --playwright --browsers chromium firefox webkit",
 		"prettier": "prettier **/*.{js,jsx} --write",
 		"prepublishOnly": "npm run lint && npm run test"
 	},
 	"eslintConfig": {
+    "root": true,
 		"extends": "developit",
 		"settings": {
 			"react": {
-				"version": "latest"
+				"version": "detect"
 			}
 		},
 		"rules": {
@@ -59,23 +60,12 @@
 		"@web/dev-server-esbuild": "^0.2.2",
 		"@web/test-runner": "^0.7.12",
 		"@web/test-runner-playwright": "^0.5.4",
+		"@web/test-runner-puppeteer": "*",
 		"eslint": "^7.7.0",
 		"eslint-config-developit": "^1.2.0",
 		"get-stream": "^6.0.0",
-		"husky": "^4.2.5",
-		"lint-staged": "^10.2.13",
 		"microbundle": "^0.12.3",
 		"preact": "^10.4.8",
 		"prettier": "^2.1.1"
-	},
-	"lint-staged": {
-		"**/*.{js,jsx,ts,tsx,yml}": [
-			"prettier --write"
-		]
-	},
-	"husky": {
-		"hooks": {
-			"pre-commit": "lint-staged"
-		}
 	}
 }
