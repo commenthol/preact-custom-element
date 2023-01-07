@@ -13,6 +13,7 @@ export default function register(Component, tagName, propNames, options) {
 	PreactElement.prototype.connectedCallback = connectedCallback;
 	PreactElement.prototype.attributeChangedCallback = attributeChangedCallback;
 	PreactElement.prototype.disconnectedCallback = disconnectedCallback;
+	PreactElement.prototype._deferredRender = deferredRender;
 
 	propNames =
 		propNames ||
@@ -75,17 +76,27 @@ function connectedCallback() {
 	});
 	this.dispatchEvent(event);
 	const context = event.detail.context;
-
 	this._vdom = h(
 		ContextProvider,
 		{ ...this._props, context },
 		toVdom(this, this._vdomComponent)
 	);
-	(this.hasAttribute('hydrate') ? hydrate : render)(this._vdom, this._root);
+	(this.hasAttribute('hydrate') ? hydrate : this._deferredRender.bind(this))(this._vdom, this._root);
 }
 
 function toCamelCase(str) {
 	return str.replace(/-(\w)/g, (_, c) => (c ? c.toUpperCase() : ''));
+}
+
+function deferredRender (vdom, root) {
+	if (this._renderId) {
+		window.cancelAnimationFrame(this._renderId);
+		this._renderId = undefined;
+	}
+	this._renderId = window.requestAnimationFrame(() => {
+		this._renderId = undefined;
+		render(vdom, root);
+	});
 }
 
 function attributeChangedCallback(name, oldValue, newValue) {
@@ -105,11 +116,11 @@ function attributeChangedCallback(name, oldValue, newValue) {
 	props[toCamelCase(name)] = _newValue;
 
 	this._vdom = cloneElement(this._vdom, props);
-	render(this._vdom, this._root);
+	this._deferredRender(this._vdom, this._root);
 }
 
 function disconnectedCallback() {
-	render((this._vdom = null), this._root);
+	this._deferredRender((this._vdom = null), this._root);
 }
 
 /**
