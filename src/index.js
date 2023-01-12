@@ -31,7 +31,7 @@ export default function register(Component, tagName, propNames, options) {
 				if (this._vdom) {
 					this.attributeChangedCallback(name, null, v);
 				} else {
-					if (!this._props) this._props = {};
+					if (!this._props) this._props = { className: '' };
 					this._props[name] = v;
 					this.connectedCallback();
 				}
@@ -106,7 +106,7 @@ function attributeChangedCallback(name, oldValue, newValue) {
 	// When calling `node.removeAttribute()` we'll receive `null` as the new
 	// value. See issue #50.
 	const _newValue = fromString(newValue);
-	const props = this._props || {};
+	const props = this._props || { className: '' };
 
 	if (props[name] === _newValue) {
 		// no rerender if values are same
@@ -185,7 +185,7 @@ function fromString(value) {
 	if (value === null) {
 		return;
 	}
-	if (typeof value === 'boolean') {
+	if (typeof value !== 'string') {
 		return value;
 	}
 	if (value === 'true') {
@@ -194,6 +194,17 @@ function fromString(value) {
 	if (value === 'false') {
 		return false;
 	}
+	if (/[{[]/.test(value[0])) {
+		return jsonParse(value);
+	}
 	const num = Number(value);
 	return isNaN(num) || RE.test(value) ? value : num;
+}
+
+function jsonParse (str) {
+	try {
+		return JSON.parse(str);
+	} catch (e) {
+	}
+	return str;
 }

@@ -1,5 +1,14 @@
 # preact-custom-element
 
+custom fork; implements:
+- deferred rendering
+- type conversion for numbers, boolean and stringified objects (setAttribute stringifies)
+
+install with:
+
+    npm i git+https://github.com/commenthol/preact-custom-element#semver:^4.2.2
+
+
 Generate/register a custom element from a preact component. As of 3.0.0, this library implements the Custom Elements v1 spec.
 Previous versions (< 3.0.0) implemented the v0 proposal, which was only implemented in Chrome and is abandoned.
 
