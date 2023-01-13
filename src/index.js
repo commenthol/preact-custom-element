@@ -1,4 +1,4 @@
-import { h, cloneElement, render, hydrate } from 'preact';
+import { h, cloneElement, render, hydrate, Fragment } from 'preact';
 
 export default function register(Component, tagName, propNames, options) {
 	function PreactElement() {
@@ -81,6 +81,8 @@ function connectedCallback() {
 		{ ...this._props, context },
 		toVdom(this, this._vdomComponent)
 	);
+	// clear all inner elements to prevent double render
+	this.innerHTML = null;
 	(this.hasAttribute('hydrate') ? hydrate : this._deferredRender.bind(this))(this._vdom, this._root);
 }
 
@@ -145,7 +147,8 @@ function Slot(props, context) {
 			}
 		}
 	};
-	return h('slot', { ...props, ref });
+	return h(Fragment, { ...props, ref });
+	// return h('slot', { ...props, ref });
 }
 
 function toVdom(element, nodeName) {
