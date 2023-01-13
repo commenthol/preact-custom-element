@@ -6,6 +6,7 @@ export default function register(Component, tagName, propNames, options) {
 		inst._vdomComponent = Component;
 		inst._root =
 			options && options.shadow ? inst.attachShadow({ mode: 'open' }) : inst;
+		inst._attrMap = attrMap;
 		return inst;
 	}
 	PreactElement.prototype = Object.create(HTMLElement.prototype);
@@ -19,7 +20,19 @@ export default function register(Component, tagName, propNames, options) {
 		propNames ||
 		Component.observedAttributes ||
 		Object.keys(Component.propTypes || {});
-	PreactElement.observedAttributes = propNames;
+
+	const propNamesLc = ['class'];
+	// create an attribute map to resolve correct camelCase from lowercased strings
+	const attrMap = propNames.reduce((curr, name) => {
+		const nameLc = name.toLowerCase();
+		if (nameLc !== name) {
+			curr[nameLc] = name;
+			propNamesLc.push(nameLc);
+		}
+		return curr;
+	}, { class: 'className' });
+
+	PreactElement.observedAttributes = [...new Set([...propNamesLc, ...propNames])];
 
 	// Keep DOM properties and Preact props in sync
 	propNames.forEach((name) => {
@@ -31,7 +44,7 @@ export default function register(Component, tagName, propNames, options) {
 				if (this._vdom) {
 					this.attributeChangedCallback(name, null, v);
 				} else {
-					if (!this._props) this._props = { className: '' };
+					if (!this._props) this._props = {};
 					this._props[name] = v;
 					this.connectedCallback();
 				}
@@ -78,7 +91,7 @@ function connectedCallback() {
 	const context = event.detail.context;
 	this._vdom = h(
 		ContextProvider,
-		{ ...this._props, context },
+		{ className: '', ...this._props, context, dataIsWc: true },
 		toVdom(this, this._vdomComponent)
 	);
 	// clear all inner elements to prevent double render
@@ -101,14 +114,15 @@ function deferredRender (vdom, root) {
 	});
 }
 
-function attributeChangedCallback(name, oldValue, newValue) {
+function attributeChangedCallback(nameLc, oldValue, newValue) {
+	const name = this._attrMap[nameLc] || nameLc;
 	if (!this._vdom) return;
 	// Attributes use `null` as an empty value whereas `undefined` is more
 	// common in pure JS components, especially with default parameters.
 	// When calling `node.removeAttribute()` we'll receive `null` as the new
 	// value. See issue #50.
 	const _newValue = fromString(newValue);
-	const props = this._props || { className: '' };
+	const props = this._props || {};
 
 	if (props[name] === _newValue) {
 		// no rerender if values are same
@@ -147,8 +161,12 @@ function Slot(props, context) {
 			}
 		}
 	};
+	if (this.shadow) {
+		// only make use of slot in shadow mode
+		return h('slot', { ...props, ref });
+	}
+	// othewise keep the same DOM structure if not in shadow mode
 	return h(Fragment, { ...props, ref });
-	// return h('slot', { ...props, ref });
 }
 
 function toVdom(element, nodeName) {
@@ -161,8 +179,12 @@ function toVdom(element, nodeName) {
 		cn = element.childNodes;
 	for (i = a.length; i--; ) {
 		if (a[i].name !== 'slot') {
-			props[a[i].name] = a[i].value;
-			props[toCamelCase(a[i].name)] = a[i].value;
+			// fix attribute case and convert type from string
+			const nameLc = a[i].name;
+			const name = element._attrMap?.[nameLc] || nameLc;
+			const value = fromString(a[i].value);
+			props[name] = value;
+			props[toCamelCase(name)] = value;
 		}
 	}
 
