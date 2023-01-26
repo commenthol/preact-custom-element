@@ -21,7 +21,7 @@ export default function register(Component, tagName, propNames, options) {
 		Component.observedAttributes ||
 		Object.keys(Component.propTypes || {});
 
-	const propNamesLc = ['class'];
+	const propNamesLc = [];
 	// create an attribute map to resolve correct camelCase from lowercased strings
 	const attrMap = propNames.reduce((curr, name) => {
 		const nameLc = name.toLowerCase();
@@ -30,7 +30,7 @@ export default function register(Component, tagName, propNames, options) {
 			propNamesLc.push(nameLc);
 		}
 		return curr;
-	}, { class: 'className' });
+	}, {});
 
 	PreactElement.observedAttributes = [...new Set([...propNamesLc, ...propNames])];
 
@@ -59,7 +59,7 @@ export default function register(Component, tagName, propNames, options) {
 				) {
 					this.setAttribute(name, v);
 				}
-			},
+			}
 		});
 	});
 
@@ -85,13 +85,13 @@ function connectedCallback() {
 	const event = new CustomEvent('_preact', {
 		detail: {},
 		bubbles: true,
-		cancelable: true,
+		cancelable: true
 	});
 	this.dispatchEvent(event);
 	const context = event.detail.context;
 	this._vdom = h(
 		ContextProvider,
-		{ className: '', ...this._props, context, dataIsWc: true },
+		{ ...this._props, context },
 		toVdom(this, this._vdomComponent)
 	);
 	// clear all inner elements to prevent double render
@@ -172,11 +172,12 @@ function Slot(props, context) {
 function toVdom(element, nodeName) {
 	if (element.nodeType === 3) return element.data;
 	if (element.nodeType !== 1) return null;
-	let children = [],
-		props = {},
-		i = 0,
-		a = element.attributes,
-		cn = element.childNodes;
+	const children = [];
+	// use `isWC` to distinguish between preact component and a web component
+	const props = { isWC: true };
+	const a = element.attributes;
+	const cn = element.childNodes;
+	let i = 0;
 	for (i = a.length; i--; ) {
 		if (a[i].name !== 'slot') {
 			// fix attribute case and convert type from string
