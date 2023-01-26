@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Storybook</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			.stories {
+				padding-right: 1em;
+			}
+			.test {
+				padding: 1rem;
+				margin-bottom: 1rem;
+				border: 1px solid red;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- open with http://localhost:3000/stories/index.html -->
+		<div id="app">
+		</div>
+		<x-webcomp id="html" classname="test" value="42"></x-webcomp>
+		<script type="module" src="/stories/stories.jsx"></script>
+		<noscript>
+			This page needs javascript enabled!
+		</noscript>
+	</body>
+</html>
